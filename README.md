@@ -1,18 +1,167 @@
-#run the web application
+# 🔐 SecureVision – Multimodal DeepFake Detection
 
+## Overview
+SecureVision is a **multimodal deepfake detection system** capable of identifying forged **audio**, **images**, or a combination of both using **late fusion**. The system is lightweight, GPU-friendly, configurable, and suitable for **academic projects, research prototypes, and demos**.
+
+**Key features:**
+- 🎧 Audio deepfake detection (SpecRNet-Lite)
+- 🖼️ Image deepfake detection (SigLIP – Hugging Face)
+- 🔗 Late fusion of audio + image scores
+- 🌐 Web UI, CLI, and batch evaluation
+- ⚙️ Configurable thresholds, fusion weights, and temperature scaling
+
+---
+
+## System Components
+
+### Audio Detection
+- **Model:** SpecRNet-Lite
+- **Inputs:** Raw waveform
+- **Features:**
+  - Learnable filterbanks
+  - Multi-resolution STFT / Mel spectrograms
+  - Raw waveform branch
+- **Output:** Probability of FAKE (sigmoid)
+- **Checkpoint:**
+  ```
+  checkpoints/audio_kaggle_best.pt
+  ```
+
+---
+
+### Image Detection
+
+#### Primary (Hugging Face)
+- **Model:** SigLIP Image Classifier
+- **Repository:** prithivMLmods/deepfake-detector-model-v1
+- **Threshold:** 0.30
+- **Temperature:** 1.0
+- **Cache Directory:**
+  ```
+  checkpoints/pretrained_hf/
+  ```
+
+#### Fallback (Local / timm)
+- EfficientNet variants
+- DeiT variants
+
+---
+
+### Multimodal Fusion
+Late fusion combines calibrated audio and image probabilities:
+
+```
+final_score = alpha * audio_score + beta * image_score
+```
+
+**Default fusion parameters:**
+- alpha = 0.6
+- beta = 0.4
+- inconsistency_weight = 0.1
+- optional temperature scaling
+
+---
+
+## Configuration
+📄 `configs/hparams.yaml`
+
+```yaml
+device: auto
+precision: fp16   # fp32 on CPU
+
+audio:
+  threshold: 0.50
+
+image:
+  threshold: 0.30
+  temperature: 1.0
+
+fusion:
+  alpha: 0.6
+  beta: 0.4
+  inconsistency_weight: 0.1
+```
+
+---
+
+## How to Run
+
+### Web Application
+```powershell
 powershell -ExecutionPolicy Bypass -File run_webapp.ps1
+```
 
+Open browser:
+```
+http://localhost:8000
+```
 
+---
 
+### CLI – Single Sample
 
-# DeepFake Detection (Audio + Image)
+**Audio only**
+```bash
+python detect.py --audio samples/fake_1.wav
+```
 
-Low-GPU, high-accuracy multimodal deepfake detection with simple CLI. Targets:
-- Audio: ≥ 94% accuracy
-- Image: ≥ 91% accuracy
-- Minimize EER/FAR/FRR, real-time inference, ≤ RTX-2060/iGPU
+**Image only**
+```bash
+python detect.py --image samples/fake_01.jpg
+```
 
-## Architecture Overview
+**Multimodal**
+```bash
+python detect.py --audio samples/fake_1.wav --image samples/fake_01.jpg
+```
+
+---
+
+### Batch Evaluation
+```bash
+python scripts/eval_samples.py
+```
+
+**Labeling heuristic:**
+- Filenames containing `fake` → FAKE
+- Otherwise → REAL
+
+**Outputs:**
+- Per-file predictions
+- Accuracy per modality
+
+> Fusion accuracy is not computed by default.
+
+---
+
+## Expected Performance (Reported)
+
+| Modality | Accuracy | EER |
+|--------|---------|-----|
+| Audio  | 94–96%  | 4–6% |
+| Image  | 91–93%  | 7–9% |
+
+---
+
+## Dataset Layout
+
+```
+samples/
+├── audio/
+│   ├── fake_1.wav
+│   ├── fake_tts_2.wav
+│   ├── real_3.wav
+│   └── real2.wav
+│
+└── images/
+    ├── fake_01.jpg ... fake_15.jpg
+    ├── real_01.jpg ... real_15.jpg
+    └── real_web_7.jpg ... real_web_10.jpg
+```
+
+---
+
+## Architecture Diagram
 
 ```mermaid
 flowchart TD
@@ -20,99 +169,94 @@ flowchart TD
   A -->|Image| C(Image Pipeline)
   B --> D[Calibrated Audio Score]
   C --> E[Calibrated Image Score]
-  D --> F{Fusion}
+  D --> F{Late Fusion}
   E --> F
-  F --> G[Final Score + Decision]
+  F --> G[Final Decision]
 ```
 
-### Audio Pipeline
-- SpecRNet-Lite (≤ ~3M params) with learnable filterbanks
-- Multi-resolution spectrogram fusion + raw waveform branch (hybrid)
-- Optional frozen feature extractors: wav2vec2/Whisper-small encoder
-- Enhancements: SpecAugment++, supervised contrastive + focal loss, hard negatives
+---
 
-### Image Pipeline
-- ViT-Tiny/Small or DeiT-Small (distilled) via timm; EfficientNet-V2-S fallback
-- Patch size 8×8 for subtle artifacts; dual branch RGB + frequency (FFT/DCT)
-- Teacher–student self-distillation; landmark-aware face-cropping
-- Adversarial JPEG/compression noise robustness
+## Audio Inference Flow
 
-### Fusion & Calibration
-- Late fusion: `final = α·audio + β·image`, α+β=1, α>β for voice attacks
-- Cross-modal inconsistency scoring
-- Temperature scaling + Bayesian calibration
-
-## Hyperparameters (Defaults)
-
-See configs/hparams.yaml for a complete, editable table.
-
-Key training choices:
-- Optimizer: AdamW; Scheduler: Cosine annealing w/ warmup
-- Mixed precision (FP16); Quantization-aware training ready (INT8)
-- Early stopping patience=5; checkpoint by best EER
-
-## Metrics (Formulas)
-- Accuracy = (TP+TN)/(TP+TN+FP+FN)
-- Precision = TP/(TP+FP)
-- Recall = TP/(TP+FN)
-- F1 = 2·Precision·Recall/(Precision+Recall)
-- ROC-AUC = ∫ TPR(FPR) dFPR
-- FAR = FP/(FP+TN)
-- FRR = FN/(FN+TP)
-- EER: threshold τ where FAR(τ) = FRR(τ)
-- Latency: mean wall-clock per sample (ms)
-- GPU memory: peak allocated during inference (MB)
-
-## CLI
-
-Audio:
-```bash
-python detect.py --audio samples/voice.wav
-```
-Image:
-```bash
-python detect.py --image samples/face.jpg
-```
-Multimodal:
-```bash
-python detect.py --audio samples/voice.wav --image samples/face.jpg
+```mermaid
+flowchart LR
+  W[Waveform] --> F1[Learnable Filterbanks]
+  W --> F2[Multi-Resolution Spectrograms]
+  F1 --> E[SpecRNet Encoder]
+  F2 --> E
+  E --> H[Pooling + Dense]
+  H --> P[Sigmoid → Fake Probability]
 ```
 
-Outputs include: prediction, confidence, FAR/FRR or Precision/Recall where applicable, inference time.
+---
 
-## Expected Performance vs SecureVision (Sensors 2024)
-- Audio: ≥ 94–96% accuracy, EER ≤ 4–6% with contrastive pretraining + SpecAugment++ and fusion of learnable filterbanks with pretrained encoders.
-- Image: ≥ 91–93% accuracy, EER ≤ 7–9% with dual RGB+frequency and 8×8 ViT/DeiT-S distillation.
-- Advantages: Better calibration (temperature scaling), robust to compression, efficient models suitable for RTX-2060/iGPU.
+## Image Inference Flow (SigLIP)
 
-## Deployment Notes
-- CPU/iGPU: Enable `--device cpu` and `--precision fp16` where supported; ORT runtime for ONNX if needed.
-- RTX-2060: Batch=1, mixed precision on; expect ~15–40 ms inference/sample.
-- Quantization: Use QAT hooks during training; export to INT8 for edge.
-
-## Data Layout (Example)
-```
-./data/
-  audio/
-    train/{real,fake}/...wav
-    val/{real,fake}/...wav
-    test/{real,fake}/...wav
-  image/
-    train/{real,fake}/...jpg
-    val/{real,fake}/...jpg
-    test/{real,fake}/...jpg
+```mermaid
+flowchart LR
+  I[Image File] --> P[AutoImageProcessor]
+  P --> M[SigLIP Classifier]
+  M --> L[Logits]
+  L --> S[Softmax + Temperature]
+  S --> O[Fake Probability]
 ```
 
-## Train
-```bash
-# Audio
-python -m src.training.train_audio --config configs/hparams.yaml
-# Image
-python -m src.training.train_image --config configs/hparams.yaml
-# Multimodal
-python -m src.training.train_multimodal --config configs/hparams.yaml
+---
+
+## Metrics & Evaluation Pipeline
+
+```mermaid
+flowchart TD
+  S[Samples] --> L[Filename-based Labels]
+  L --> AEV[Audio Evaluation]
+  L --> IEV[Image Evaluation]
+  AEV --> AP[Audio Predictions]
+  IEV --> IP[Image Predictions]
+  AP --> CM1[Confusion Matrix]
+  IP --> CM2[Confusion Matrix]
+  CM1 --> MET1[Accuracy / Precision / Recall / F1]
+  CM2 --> MET2[Accuracy / Precision / Recall / F1]
 ```
 
-## License
-Internal/research use. Replace with your policy.
-# Deepfake
+---
+
+## Checkpoints & Cache
+
+### Hugging Face Cache
+```
+checkpoints/pretrained_hf/models--prithivMLmods--deepfake-detector-model-v1/
+```
+
+Contains:
+- config.json
+- model.safetensors
+- preprocessor_config.json
+
+---
+
+### Local Checkpoints
+```
+checkpoints/audio_kaggle_best.pt
+checkpoints/image_best.pt   # optional
+```
+
+---
+
+## Notes & Optimization Tips
+- Filename-based labeling may cause noise; refine `_label_from_name()` if needed
+- For CPU-only inference:
+  ```bash
+  --device cpu --precision fp32
+  ```
+- If CUDA OOM occurs:
+  - Reduce image resolution in `configs/hparams.yaml`
+  - Switch image backend to timm
+
+---
+
+## Project Status
+✔ Multimodal inference
+✔ Web + CLI interface
+✔ Config-driven pipeline
+✔ Academic & research ready
+

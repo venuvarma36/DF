@@ -41,7 +41,6 @@
         .header h1 {
             color: #333;
             font-size: 2.6em;
-            margin-bottom: 10px;
         }
 
         .header p {
@@ -62,28 +61,18 @@
             border-radius: 10px;
             padding: 30px;
             text-align: center;
-            transition: all 0.3s ease;
             cursor: pointer;
             background: #f8f9fa;
+            transition: all 0.3s ease;
         }
 
-        .upload-box:hover,
-        .upload-box.dragover {
-            border-color: #764ba2;
+        .upload-box:hover {
             background: #eef0ff;
             transform: scale(1.02);
         }
 
         .upload-box h3 {
-            color: #333;
             margin-bottom: 10px;
-            font-size: 1.35em;
-        }
-
-        .upload-box p {
-            color: #777;
-            margin-bottom: 20px;
-            font-size: 0.95em;
         }
 
         .file-input {
@@ -91,66 +80,53 @@
         }
 
         .upload-label {
-            display: inline-block;
             background: #667eea;
             color: white;
             padding: 12px 30px;
             border-radius: 8px;
             cursor: pointer;
+            display: inline-block;
             font-weight: 600;
-        }
-
-        .upload-label:hover {
-            background: #764ba2;
         }
 
         .file-name {
-            margin-top: 15px;
-            color: #667eea;
+            margin-top: 12px;
             font-weight: 600;
+            color: #667eea;
         }
 
         .button-group {
             display: flex;
-            gap: 15px;
             justify-content: center;
+            gap: 15px;
             margin-bottom: 30px;
         }
 
         button {
             padding: 15px 30px;
-            font-size: 1.05em;
+            font-weight: 600;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 1em;
         }
 
         .btn-submit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
         }
 
         .btn-clear {
             background: #e0e0e0;
-            color: #333;
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
         }
 
         .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
+            display: inline-block;
             animation: spin 1s linear infinite;
             margin-right: 10px;
         }
@@ -161,9 +137,8 @@
 
         .results {
             display: none;
-            margin-top: 40px;
+            border-top: 2px solid #eee;
             padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
         }
 
         .results.show {
@@ -172,26 +147,16 @@
 
         .result-card {
             background: #f8f9fa;
-            border-radius: 10px;
             padding: 25px;
+            border-radius: 10px;
             margin-bottom: 20px;
             border-left: 5px solid #667eea;
         }
 
         .multimodal-result {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border-left-color: white;
-        }
-
-        .result-card h3 {
-            margin-bottom: 15px;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
         }
 
         .prediction-real {
@@ -204,31 +169,13 @@
             font-weight: 700;
         }
 
-        .confidence-bar {
-            width: 100%;
-            height: 25px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .confidence-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
         .error-message {
+            display: none;
             background: #ffebee;
             color: #c62828;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 8px;
             margin-top: 20px;
-            display: none;
         }
 
         .error-message.show {
@@ -251,38 +198,32 @@
 
     <div class="header">
         <h1>🛡️ SecureVision</h1>
-        <p><strong>Advanced Multimodal Deepfake Detection System</strong></p>
-        <p>
-            SecureVision is a trustworthy and scalable framework designed to detect
-            manipulated audio and visual media using state-of-the-art deep learning
-            and multimodal analysis, ensuring digital integrity and cybersecurity resilience.
-        </p>
+        <p><strong>Multimodal Deepfake Detection System</strong></p>
+        <p>Detect manipulated audio and visual media using advanced AI models.</p>
     </div>
 
-    <form id="detectionForm" enctype="multipart/form-data">
+    <form id="detectionForm">
         <div class="upload-section">
 
-            <div class="upload-box" id="audioBox">
-                <h3>🎙️ Audio Modality Analysis</h3>
-                <p>Supported formats: MP3, WAV, FLAC</p>
+            <div class="upload-box">
+                <h3>🎙️ Audio Analysis</h3>
                 <input type="file" id="audioInput" class="file-input" accept="audio/*">
-                <label for="audioInput" class="upload-label">Upload Audio Sample</label>
+                <label class="upload-label" for="audioInput">Upload Audio</label>
                 <div class="file-name" id="audioName"></div>
             </div>
 
-            <div class="upload-box" id="imageBox">
-                <h3>🖼️ Visual Modality Analysis</h3>
-                <p>Supported formats: JPG, PNG, BMP</p>
+            <div class="upload-box">
+                <h3>🖼️ Image Analysis</h3>
                 <input type="file" id="imageInput" class="file-input" accept="image/*">
-                <label for="imageInput" class="upload-label">Upload Image Sample</label>
+                <label class="upload-label" for="imageInput">Upload Image</label>
                 <div class="file-name" id="imageName"></div>
             </div>
 
         </div>
 
         <div class="button-group">
-            <button type="submit" class="btn-submit" id="submitBtn">Run SecureVision Analysis</button>
-            <button type="button" class="btn-clear" id="clearBtn">Reset Inputs</button>
+            <button type="submit" class="btn-submit" id="submitBtn">Run Analysis</button>
+            <button type="button" class="btn-clear" id="clearBtn">Reset</button>
         </div>
     </form>
 
@@ -313,7 +254,7 @@
         e.preventDefault();
 
         if (!audioInput.files.length && !imageInput.files.length) {
-            showError("Please upload at least one media sample.");
+            showError("Upload at least one file.");
             return;
         }
 
@@ -334,7 +275,7 @@
             showError(err.message);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Run SecureVision Analysis';
+            submitBtn.innerHTML = 'Run Analysis';
         }
     };
 
@@ -346,33 +287,27 @@
     function renderResults(data) {
         resultsDiv.innerHTML = '';
 
-        for (const key of ['audio', 'image', 'multimodal']) {
-            if (!data[key]) continue;
+        ['audio', 'image', 'multimodal'].forEach(key => {
+            if (!data[key]) return;
 
-            const r = data[key];
-            const cls = r.prediction === 'DEEPFAKE' ? 'prediction-fake' : 'prediction-real';
+            const predictionClass =
+                data[key].prediction === 'DEEPFAKE'
+                ? 'prediction-fake'
+                : 'prediction-real';
 
             resultsDiv.innerHTML += `
-            <div class="result-card ${key === 'multimodal' ? 'multimodal-result' : ''}">
-                <h3>${key.toUpperCase()} INTEGRITY ASSESSMENT</h3>
-                <div class="result-row">
-                    <span>Detection Outcome:</span>
-                    <span class="${cls}">${r.prediction}</span>
+                <div class="result-card ${key === 'multimodal' ? 'multimodal-result' : ''}">
+                    <h3>${key.toUpperCase()} RESULT</h3>
+                    <p class="${predictionClass}">
+                        ${data[key].prediction}
+                    </p>
                 </div>
-                <div class="result-row">
-                    <span>Model Confidence Score:</span>
-                    <span>${(r.confidence * 100).toFixed(1)}%</span>
-                </div>
-                <div class="confidence-bar">
-                    <div class="confidence-fill" style="width:${r.confidence * 100}%">
-                        ${(r.confidence * 100).toFixed(1)}%
-                    </div>
-                </div>
-            </div>`;
-        }
+            `;
+        });
 
         resultsDiv.classList.add('show');
     }
 </script>
+
 </body>
 </html>
