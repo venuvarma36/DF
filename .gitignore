@@ -1,0 +1,159 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+*.iml
+.project
+.pydevproject
+.settings/
+*.code-workspace
+
+# OS
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data & Models
+data/
+checkpoints/
+models/
+weights/
+*.pt
+*.pth
+*.ckpt
+
+# Logs & Outputs
+logs/
+*.log
+runs/
+results/
+outputs/
+
+# Cache
+__cache__/
+.cache/
+*.cache
+audio_cache/
+checkpoints/audio_cache/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+.DS_Store
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.flv
+*.wav
+*.mp3
+*.m4a
+*.flac
+
+# Zip/Archive files
+*.zip
+*.rar
+*.tar
+*.tar.gz
+*.7z
+
+# OS specific
+.vscode/
+.idea/
+*.sublime-*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Development
+.dev/
+debug/
+test_outputs/
+
+# Git
+.git/
+
+# Documentation builds
+site/
+docs/_build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE-specific
+.vscode/settings.json
+.vscode/launch.json
+
+# Build artifacts
+*.so
+*.o
+*.a
+*.dylib
+
+# Keep these directories but ignore their contents
+data/audio/train/real/.gitkeep
+data/audio/train/fake/.gitkeep
+data/audio/val/real/.gitkeep
+data/audio/val/fake/.gitkeep
+data/audio/test/real/.gitkeep
+data/audio/test/fake/.gitkeep
+data/image/train/real/.gitkeep
+data/image/train/fake/.gitkeep
+data/image/val/real/.gitkeep
+data/image/val/fake/.gitkeep
+data/image/test/real/.gitkeep
+data/image/test/fake/.gitkeep
+checkpoints/.gitkeep
+logs/.gitkeep
+samples/.gitkeep

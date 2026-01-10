@@ -1,0 +1,193 @@
+# ============================================================================
+# RTX 2050 (4GB VRAM) OPTIMIZED CONFIGURATION
+# Strict memory constraints: FP16 mixed precision, gradient checkpointing,
+# gradient accumulation, feature caching
+# ============================================================================
+
+seed: 42
+
+# ============================================================================
+# AUDIO MODEL (SpecRNet-Lite)
+# ============================================================================
+audio:
+  model: specrnet_lite
+  params:
+    channels: [16, 32, 64]
+    gru_hidden: 128
+    dropout: 0.2
+    embed_dim: 128
+  feature:
+    sample_rate: 16000
+    n_fft: 512
+    hop_length: 160
+    win_length: 400
+    n_mels: 64
+    multi_res_ffts: [256, 512, 1024]
+    learnable_filterbanks: false
+    use_raw_waveform_branch: false
+
+# ============================================================================
+# IMAGE MODEL (EfficientNet-B0 - Smaller & Faster)
+# ============================================================================
+image:
+  model: efficientnet_b0
+  params:
+    img_size: 224
+    drop_rate: 0.2
+
+# ============================================================================
+# TRAINING CONFIGURATION
+# ============================================================================
+training:
+  optimizer: adamw
+  weight_decay: 0.02
+  batch_size: 32
+  max_epochs: 50
+  warmup_epochs: 3
+  cosine_min_lr: 1.0e-6
+  early_stopping_patience: 5
+  checkpoint_metric: eer
+  mixed_precision: true
+  grad_clip_norm: 1.0
+  use_qat: false
+  
+  # RTX 2050 specific
+  enable_amp: true
+  amp_dtype: float16
+  grad_scaler_init_scale: 65536.0
+  cudnn_benchmark: true
+  cudnn_deterministic: false
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+
+# ============================================================================
+# IMAGE TRAINING PHASES (RTX 2050 specific)
+# ============================================================================
+image_training:
+  total_epochs: 12
+  batch_size_train: 4
+  gradient_accumulation_steps: 2
+  batch_size_val: 8
+  gradient_checkpointing: false
+  mixed_precision: true
+  mixed_precision_dtype: float16
+  max_samples: null  # Use all available images
+  drop_redundancy_ratio: 0.0
+  early_stopping_patience: 4
+  early_stopping_metric: eer
+  
+  phase1:
+    epochs: 12
+    lr: 2.5e-4
+    freeze_backbone: false
+    name: "train"
+  
+  augmentation:
+    jpeg_compression: true
+    jpeg_quality_min: 30
+    jpeg_quality_max: 90
+    jpeg_prob: 0.3
+    random_flip: true
+    random_rotation: 10
+    color_jitter: true
+    color_jitter_brightness: 0.4
+    color_jitter_contrast: 0.4
+    color_jitter_saturation: 0.2
+
+# ============================================================================
+# AUDIO TRAINING PHASES (RTX 2050 specific)
+# ============================================================================
+audio_training:
+  total_epochs: 20
+  batch_size_train: 64
+  gradient_accumulation_steps: 1
+  batch_size_val: 128
+  gradient_checkpointing: true
+  mixed_precision: true
+  mixed_precision_dtype: float16
+  feature_cache_dir: checkpoints/audio_cache
+  enable_feature_caching: true
+  feature_cache_type: disk
+  max_samples: 80000
+  drop_asvspoof_ratio: 0.0
+  drop_synthetic_ratio: 0.0
+  sample_rate: 16000
+  n_fft: 512
+  hop_length: 160
+  win_length: 400
+  n_mels: 64
+  multi_res_ffts: [256, 512, 1024]
+  early_stopping_patience: 3
+  early_stopping_metric: eer
+  
+  phase1:
+    epochs: 2
+    lr: 1.0e-3
+    freeze_backbone: true
+    name: "head-warmup"
+  
+  phase2:
+    epochs: 12
+    lr: 3.0e-4
+    freeze_backbone: false
+    name: "main-training"
+  
+  phase3:
+    epochs: 6
+    lr: 1.0e-4
+    freeze_backbone: false
+    name: "fine-tune"
+  
+  augmentation:
+    spec_augment_time_masks: 2
+    spec_augment_freq_masks: 2
+    time_mask_width: 20
+    freq_mask_width: 10
+
+# ============================================================================
+# LOSS FUNCTIONS
+# ============================================================================
+losses:
+  image:
+    type: focal_loss
+    focal_alpha: 0.25
+    focal_gamma: 2.0
+    label_smoothing: 0.1
+  
+  audio:
+    type: focal_loss_with_supcon
+    focal_alpha: 0.25
+    focal_gamma: 2.0
+    supcon_temperature: 0.1
+    supcon_weight: 0.3
+
+# ============================================================================
+# PATHS
+# ============================================================================
+paths:
+  data_root: data
+  checkpoints: checkpoints
+  logs: logs
+  audio_cache: checkpoints/audio_cache
+
+# ============================================================================
+# HARDWARE & PERFORMANCE
+# ============================================================================
+hardware:
+  device: cuda
+  fp16_enabled: true
+  max_gpu_memory_mb: 4096
+  target_image_time_hours: 14
+  target_audio_time_hours: 5
+
+# ============================================================================
+# METRICS & LOGGING
+# ============================================================================
+metrics:
+  log_frequency: 50
+  compute_classification_metrics: true
+  compute_security_metrics: true
+  compute_inference_latency: true
+  compute_peak_gpu_memory: true
+  print_format: detailed

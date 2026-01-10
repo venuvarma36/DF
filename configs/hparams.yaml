@@ -1,0 +1,81 @@
+# Default hyperparameters
+seed: 42
+
+training:
+  optimizer: adamw
+  lr: 3.0e-4
+  weight_decay: 0.02
+  batch_size: 32
+  max_epochs: 50
+  warmup_epochs: 3
+  cosine_min_lr: 1.0e-6
+  early_stopping_patience: 5
+  checkpoint_metric: eer  # lower is better
+  mixed_precision: true
+  grad_clip_norm: 1.0
+  use_qat: false
+
+audio:
+  model: specrnet_lite
+  params:
+    channels: [16, 32, 64]
+    gru_hidden: 128
+    dropout: 0.2
+    embed_dim: 128
+  feature:
+    sample_rate: 16000
+    n_fft: 512
+    hop_length: 160
+    win_length: 400
+    n_mels: 64
+    multi_res_ffts: [256, 512, 1024]
+    learnable_filterbanks: true
+    use_raw_waveform_branch: true
+  pretrained:
+    use_wav2vec2: true
+    use_whisper_small: true
+    freeze_pretrained: true
+
+image:
+  backend: hf
+  hf_model: prithivMLmods/deepfake-detector-model-v1
+  model: deit_small_patch8_distilled
+  threshold: 0.30
+  temperature: 1.0
+  params:
+    img_size: 224
+    patch_size: 8
+    embed_dim: 384
+    drop_rate: 0.1
+  dual_branch:
+    frequency_branch: fft
+    concat_strategy: channel
+  distillation:
+    teacher: vit_small_patch8
+    temperature: 2.0
+
+fusion:
+  alpha: 0.6
+  beta: 0.4
+  temperature_scaling: true
+  inconsistency_weight: 0.1
+
+losses:
+  focal:
+    gamma: 2.0
+    alpha: 0.25
+  supervised_contrastive:
+    temperature: 0.1
+
+augment:
+  audio:
+    specaugment_time_masks: 2
+    specaugment_freq_masks: 2
+  image:
+    jpeg_prob: 0.3
+    jpeg_quality_range: [30, 90]
+
+paths:
+  data_root: data
+  checkpoints: checkpoints
+  logs: logs
