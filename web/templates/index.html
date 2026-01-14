@@ -61,7 +61,6 @@
             border-radius: 10px;
             padding: 30px;
             text-align: center;
-            cursor: pointer;
             background: #f8f9fa;
             transition: all 0.3s ease;
         }
@@ -95,11 +94,44 @@
             color: #667eea;
         }
 
+        .preview-thumb {
+            width: 90px;
+            height: 90px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .preview-audio {
+            width: 160px;
+            flex-shrink: 0;
+        }
+
+        .preview-title {
+            font-size: 0.95em;
+            color: #222;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
         .button-group {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-bottom: 30px;
+        }
+
+        .inline-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-mini {
+            padding: 8px 14px;
+            font-size: 0.9em;
         }
 
         button {
@@ -145,28 +177,56 @@
             display: block;
         }
 
-        .result-card {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 5px solid #667eea;
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 12px;
         }
 
-        .multimodal-result {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-left-color: white;
+        .result-card {
+            background: #f8f9fa;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #e3e3e3;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .result-meta {
+            font-size: 0.9em;
+            color: #444;
+            margin-top: 4px;
+        }
+
+        .prediction-pill {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            margin-top: 6px;
         }
 
         .prediction-real {
-            color: #27ae60;
-            font-weight: 700;
+            background: #e8f6f0;
+            color: #1d9a63;
         }
 
         .prediction-fake {
-            color: #e74c3c;
-            font-weight: 700;
+            background: #fdecea;
+            color: #d64545;
+        }
+
+        .error-chip {
+            background: #ffebee;
+            color: #c62828;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: inline-block;
         }
 
         .error-message {
@@ -207,16 +267,22 @@
 
             <div class="upload-box">
                 <h3>🎙️ Audio Analysis</h3>
-                <input type="file" id="audioInput" class="file-input" accept="audio/*">
+                <input type="file" id="audioInput" class="file-input" accept="audio/*" multiple>
                 <label class="upload-label" for="audioInput">Upload Audio</label>
                 <div class="file-name" id="audioName"></div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-clear btn-mini" id="clearAudioBtn">Reset Audio</button>
+                </div>
             </div>
 
             <div class="upload-box">
                 <h3>🖼️ Image Analysis</h3>
-                <input type="file" id="imageInput" class="file-input" accept="image/*">
+                <input type="file" id="imageInput" class="file-input" accept="image/*" multiple>
                 <label class="upload-label" for="imageInput">Upload Image</label>
                 <div class="file-name" id="imageName"></div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-clear btn-mini" id="clearImageBtn">Reset Images</button>
+                </div>
             </div>
 
         </div>
@@ -238,16 +304,43 @@
     const imageInput = document.getElementById('imageInput');
     const submitBtn = document.getElementById('submitBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const clearAudioBtn = document.getElementById('clearAudioBtn');
+    const clearImageBtn = document.getElementById('clearImageBtn');
     const resultsDiv = document.getElementById('results');
     const errorMsg = document.getElementById('errorMsg');
 
-    audioInput.onchange = () => audioName.textContent = audioInput.files[0]?.name || '';
-    imageInput.onchange = () => imageName.textContent = imageInput.files[0]?.name || '';
+    let audioFiles = [];
+    let imageFiles = [];
+
+    audioInput.onchange = () => {
+        audioFiles = Array.from(audioInput.files);
+        audioName.textContent = audioFiles.length ? `${audioFiles.length} audio file(s) selected` : '';
+    };
+    imageInput.onchange = () => {
+        imageFiles = Array.from(imageInput.files);
+        imageName.textContent = imageFiles.length ? `${imageFiles.length} image(s) selected` : '';
+    };
 
     clearBtn.onclick = () => {
         form.reset();
         resultsDiv.classList.remove('show');
         errorMsg.classList.remove('show');
+        audioName.textContent = '';
+        imageName.textContent = '';
+        audioFiles = [];
+        imageFiles = [];
+    };
+
+    clearAudioBtn.onclick = () => {
+        audioInput.value = '';
+        audioFiles = [];
+        audioName.textContent = '';
+    };
+
+    clearImageBtn.onclick = () => {
+        imageInput.value = '';
+        imageFiles = [];
+        imageName.textContent = '';
     };
 
     form.onsubmit = async (e) => {
@@ -263,8 +356,8 @@
 
         try {
             const formData = new FormData();
-            if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
-            if (imageInput.files.length) formData.append('image', imageInput.files[0]);
+            audioFiles.forEach(file => formData.append('audio', file));
+            imageFiles.forEach(file => formData.append('image', file));
 
             const res = await fetch('/api/detect', { method: 'POST', body: formData });
             const data = await res.json();
@@ -287,24 +380,81 @@
     function renderResults(data) {
         resultsDiv.innerHTML = '';
 
-        ['audio', 'image', 'multimodal'].forEach(key => {
-            if (!data[key]) return;
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
 
-            const predictionClass =
-                data[key].prediction === 'DEEPFAKE'
-                ? 'prediction-fake'
-                : 'prediction-real';
+        const hasAudio = Array.isArray(data.audio) && data.audio.length;
+        const hasImage = Array.isArray(data.image) && data.image.length;
 
-            resultsDiv.innerHTML += `
-                <div class="result-card ${key === 'multimodal' ? 'multimodal-result' : ''}">
-                    <h3>${key.toUpperCase()} RESULT</h3>
-                    <p class="${predictionClass}">
-                        ${data[key].prediction}
-                    </p>
-                </div>
-            `;
-        });
+        if (!hasAudio && !hasImage) {
+            showError('No predictions returned.');
+            return;
+        }
 
+        if (hasAudio) {
+            const audioSection = document.createElement('div');
+            audioSection.innerHTML = '<h3>Audio Results</h3>';
+            const grid = document.createElement('div');
+            grid.className = 'result-grid';
+            data.audio.forEach(row => {
+                const predictionClass = row.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
+                const card = document.createElement('div');
+                card.className = 'result-card';
+
+                const match = audioFiles.find(f => f.name === row.filename);
+                const previewUrl = match ? URL.createObjectURL(match) : null;
+
+                card.innerHTML = `
+                    ${previewUrl ? `<audio class="preview-audio" controls src="${previewUrl}"></audio>` : ''}
+                    <div>
+                        <div class="preview-title">${row.filename}</div>
+                        ${row.error ? `<div class="error-chip">${row.error}</div>` : `
+                            <span class="prediction-pill ${predictionClass}">${row.prediction}</span>
+                            <div class="result-meta">Confidence: ${row.confidence}</div>
+                            <div class="result-meta">Latency: ${row.inference_time_ms} ms</div>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            audioSection.appendChild(grid);
+            resultsDiv.appendChild(audioSection);
+        }
+
+        if (hasImage) {
+            const imageSection = document.createElement('div');
+            imageSection.style.marginTop = '18px';
+            imageSection.innerHTML = '<h3>Image Results</h3>';
+            const grid = document.createElement('div');
+            grid.className = 'result-grid';
+            data.image.forEach(row => {
+                const predictionClass = row.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
+                const card = document.createElement('div');
+                card.className = 'result-card';
+
+                const match = imageFiles.find(f => f.name === row.filename);
+                const previewUrl = match ? URL.createObjectURL(match) : null;
+
+                card.innerHTML = `
+                    ${previewUrl ? `<img class="preview-thumb" src="${previewUrl}" alt="preview" />` : ''}
+                    <div>
+                        <div class="preview-title">${row.filename}</div>
+                        ${row.error ? `<div class="error-chip">${row.error}</div>` : `
+                            <span class="prediction-pill ${predictionClass}">${row.prediction}</span>
+                            <div class="result-meta">Confidence: ${row.confidence}</div>
+                            <div class="result-meta">Latency: ${row.inference_time_ms} ms</div>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            imageSection.appendChild(grid);
+            resultsDiv.appendChild(imageSection);
+        }
+
+        errorMsg.classList.remove('show');
         resultsDiv.classList.add('show');
     }
 </script>

@@ -60,93 +60,102 @@ def home():
 
 @app.route('/api/detect', methods=['POST'])
 def detect():
-    """
-    API endpoint for detection
-    Expects multipart form data with 'audio' and/or 'image' files
-    """
-    try:
-        results = {
-            'audio': None,
-            'image': None,
-            'multimodal': None,
-            'error': None
-        }
-        
-        # Check for audio file
-        if 'audio' in request.files:
-            audio_file = request.files['audio']
-            if audio_file and audio_file.filename:
-                audio_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(audio_file.filename))
-                audio_file.save(audio_path)
-                
+    """Detect deepfakes for one or many audio/image files."""
+    audio_files = request.files.getlist('audio')
+    image_files = request.files.getlist('image')
+
+    if not audio_files and not image_files:
+        return jsonify({'error': 'No audio or image file provided'}), 400
+
+    results = {
+        'audio': [],
+        'image': [],
+        'error': None
+    }
+
+    # Process audio files
+    for audio_file in audio_files:
+        if not audio_file or not audio_file.filename:
+            continue
+
+        file_ext = os.path.splitext(audio_file.filename)[1] or '.wav'
+        fd, audio_path = tempfile.mkstemp(suffix=file_ext)
+        try:
+            os.close(fd)
+            audio_file.save(audio_path)
+
+            if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
+                raise FileNotFoundError("Audio file not saved properly")
+
+            start = time.time()
+            with torch.no_grad():
+                audio_score = infer_audio(audio_model, audio_path, cfg, device)
+            latency = (time.time() - start) * 1000
+
+            results['audio'].append({
+                'filename': audio_file.filename,
+                'prediction': 'FAKE' if audio_score >= audio_threshold else 'REAL',
+                'confidence': round(float(audio_score), 3),
+                'inference_time_ms': round(latency, 1)
+            })
+        except Exception as e:
+            results['audio'].append({
+                'filename': audio_file.filename,
+                'error': str(e)
+            })
+        finally:
+            if os.path.exists(audio_path):
                 try:
-                    start = time.time()
-                    with torch.no_grad():
-                        audio_score = infer_audio(audio_model, audio_path, cfg, device)
-                    latency = (time.time() - start) * 1000
-                    
-                    results['audio'] = {
-                        'prediction': 'FAKE' if audio_score >= audio_threshold else 'REAL',
-                        'confidence': round(float(audio_score), 3),
-                        'inference_time_ms': round(latency, 1)
-                    }
-                finally:
-                    if os.path.exists(audio_path):
-                        os.remove(audio_path)
-        
-        # Check for image file
-        if 'image' in request.files:
-            image_file = request.files['image']
-            if image_file and image_file.filename:
-                image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(image_file.filename))
-                image_file.save(image_path)
-                
+                    os.remove(audio_path)
+                except Exception:
+                    pass
+
+    # Process image files
+    for image_file in image_files:
+        if not image_file or not image_file.filename:
+            continue
+
+        file_ext = os.path.splitext(image_file.filename)[1] or '.jpg'
+        fd, image_path = tempfile.mkstemp(suffix=file_ext)
+        try:
+            os.close(fd)
+            image_file.save(image_path)
+
+            if not os.path.exists(image_path) or os.path.getsize(image_path) == 0:
+                raise FileNotFoundError("Image file not saved properly")
+
+            start = time.time()
+            image = Image.open(image_path).convert("RGB")
+            inputs = image_processor(images=image, return_tensors="pt").to(device)
+
+            with torch.no_grad():
+                outputs = image_model(**inputs)
+                logits = outputs.logits
+                temp = float(cfg.get('image', {}).get('temperature', 1.0))
+                probs = torch.softmax(logits / temp, dim=-1)
+                fake_prob = probs[0][1].item()
+
+            latency = (time.time() - start) * 1000
+
+            results['image'].append({
+                'filename': image_file.filename,
+                'prediction': 'FAKE' if fake_prob >= image_threshold else 'REAL',
+                'confidence': round(float(fake_prob), 3),
+                'inference_time_ms': round(latency, 1)
+            })
+        except Exception as e:
+            results['image'].append({
+                'filename': image_file.filename,
+                'error': str(e)
+            })
+        finally:
+            if os.path.exists(image_path):
                 try:
-                    start = time.time()
-                    # Load and preprocess image
-                    image = Image.open(image_path).convert("RGB")
-                    inputs = image_processor(images=image, return_tensors="pt").to(device)
-                    
-                    # Make prediction
-                    with torch.no_grad():
-                        outputs = image_model(**inputs)
-                        logits = outputs.logits
-                        temp = float(cfg.get('image', {}).get('temperature', 1.0))
-                        probs = torch.softmax(logits / temp, dim=-1)
-                        # probs[0][0] = Real, probs[0][1] = Fake
-                        fake_prob = probs[0][1].item()
-                    
-                    latency = (time.time() - start) * 1000
-                    image_score = fake_prob  # Use for fusion
-                    
-                    results['image'] = {
-                        'prediction': 'FAKE' if fake_prob >= image_threshold else 'REAL',
-                        'confidence': round(float(fake_prob), 3),
-                        'inference_time_ms': round(latency, 1)
-                    }
-                finally:
-                    if os.path.exists(image_path):
-                        os.remove(image_path)
-        
-        # Multimodal fusion if both present
-        if results['audio'] and results['image']:
-            audio_score_val = audio_score if audio_file else None
-            image_score_val = image_score if image_file else None
-            
-            if audio_score_val is not None and image_score_val is not None:
-                fused_score = fuse_scores(audio_score_val, image_score_val, cfg.get('fusion', {}))
-                results['multimodal'] = {
-                    'prediction': 'FAKE' if fused_score >= 0.5 else 'REAL',
-                    'confidence': round(float(fused_score), 3)
-                }
-        
-        if not results['audio'] and not results['image']:
-            return jsonify({'error': 'No audio or image file provided'}), 400
-        
-        return jsonify(results)
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+                    os.remove(image_path)
+                except Exception:
+                    pass
+
+    return jsonify(results)
 
 
 @app.route('/api/health', methods=['GET'])
