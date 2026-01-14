@@ -1,0 +1,89 @@
+SecureVision Project Overview
+============================
+
+Purpose
+-------
+Multimodal deepfake detector for audio, images, and their fusion. Supports CLI and web UI for demos, research, and batch evaluation.
+
+Core Tools & Entry Points
+-------------------------
+- CLI: detect.py — single-sample inference for audio, image, or both.
+- Web API/UI: web/app.py (Flask) with /api/detect and /api/health plus frontend at web/templates/index.html.
+- Config: configs/hparams.yaml — devices, thresholds, model backends, fusion weights, augmentation hints.
+- Checkpoints: checkpoints/audio_kaggle_best.pt (SpecRNet-Lite), checkpoints/pretrained_hf/... (SigLIP image model).
+
+Workflow (Input → Prediction)
+-----------------------------
+1) Load config and select device/precision (fp16 on CUDA, fp32 otherwise).
+2) Audio path provided:
+   - preprocess_audio() loads/decodes audio, resamples to 16 kHz, mono; supports common formats via soundfile/pydub.
+   - extract_features() builds multi-resolution Mel spectrograms (MultiResSpectrogram) with learnable filterbanks.
+   - SpecRNetLite forward pass → sigmoid fake probability.
+3) Image path provided:
+   - For backend "hf": AutoImageProcessor preprocesses, SiglipForImageClassification forward pass → softmax fake prob (class index 1), optional temperature scaling.
+   - For backend "timm": OpenCV resize/normalize → timm CNN (e.g., EfficientNet) → sigmoid fake prob.
+4) Thresholding: cfg audio.threshold (default 0.50) and image.threshold (0.30) decide REAL vs FAKE per modality.
+5) Fusion (both modalities): fuse_scores() applies calibrated logistic squashing around 0.5, then weighted sum alpha=0.6, beta=0.4, minus optional inconsistency penalty → fused confidence; ≥0.5 ⇒ FAKE.
+6) Reporting: detect.py prints modality reports (confidence, latency) via format_inference_report(); web API returns JSON with per-file prediction, confidence, latency, optional error.
+
+Models
+------
+- Audio: SpecRNet-Lite (compact CNN + GRU, multi-branch spectrogram input) defined in src/audio/model_specRNet.py; checkpoint checkpoints/audio_kaggle_best.pt.
+- Image (primary): SigLIP image classifier from Hugging Face repo prithivMLmods/deepfake-detector-model-v1 cached under checkpoints/pretrained_hf/.
+- Image (fallback): timm CNNs (EfficientNet/DeiT/Vision Transformer variants) when hf backend disabled or no HF checkpoint available.
+- Fusion: Lightweight score-level fusion (no learned parameters at inference), configurable weights and inconsistency penalty.
+
+Dependencies and Why
+--------------------
+- torch / torchvision / torchaudio: core model definitions, GPU inference, spectrogram ops, mixed precision.
+- transformers / sentencepiece: load SigLIP HF classifier and tokenizer support.
+- timm: alternative image backends (EfficientNet/DeiT/ViT) when HF model not used.
+- librosa / soundfile / numpy: audio IO and array ops during preprocessing.
+- scikit-learn: metrics (accuracy, precision, recall, F1, ROC/AUC) for evaluation utilities.
+- matplotlib / seaborn: plotting confusion/ROC/PR curves in metrics helpers.
+- opencv-python: image loading/resizing/normalization for timm path.
+- einops: tensor rearrangements (ready for models; not heavily used in inference path).
+- torchmetrics: optional metric computations during training/eval.
+- onnxruntime / onnxruntime-gpu (Windows): potential ONNX inference fallback.
+- pyyaml: config loading (configs/hparams.yaml).
+- rich: CLI pretty-printing of inference reports.
+- psutil: system/resource info (used in utilities/scripts).
+- pydub (optional via code): broader audio decoding support when soundfile fails; requires ffmpeg (auto-discovery for Windows winget installs).
+
+UI Page & Features
+------------------
+- Location: web/templates/index.html served by Flask home route.
+- Layout: two upload boxes (audio, image) with drag-and-drop via file inputs, reset buttons, gradient background, responsive grid.
+- Interaction: client-side JS gathers files, posts FormData to /api/detect, shows spinner during analysis, renders cards per file with prediction pill (REAL/FAKE), confidence, latency, inline previews (audio player or image thumb), and per-file error chips.
+- Controls: Run Analysis, Reset (all), Reset Audio, Reset Images; validation to require at least one file.
+- Results: separate audio and image sections; fusion result is server-side when both modalities provided (in JSON payload).
+
+Endpoints
+---------
+- GET / : serves the UI.
+- POST /api/detect : multipart form; returns per-file predictions for provided audio/image lists; uses SpecRNet-Lite and SigLIP; supports batch within a single request.
+- GET /api/health : reports status, device, and loaded model descriptors.
+
+Notable Configuration Defaults
+------------------------------
+- Device: auto CUDA if available, else CPU; mixed precision fp16 when on CUDA.
+- Audio threshold 0.50; Image threshold 0.30; Fusion weights alpha=0.6, beta=0.4, inconsistency_weight=0.1.
+- Image backend: hf (SigLIP) by default; timm fallback auto-selected if local checkpoint present or hf disabled.
+
+Data & Checkpoints
+------------------
+- Audio checkpoint: checkpoints/audio_kaggle_best.pt (preferred) or checkpoints/audio_best.pt.
+- Image HF cache: checkpoints/pretrained_hf/models--prithivMLmods--deepfake-detector-model-v1/ with config.json, model.safetensors, preprocessor_config.json.
+- Sample assets: samples/ (real/fake audio/images) and deepfake_test_images/ for quick trials.
+
+Scripts (sampling)
+------------------
+- download_* scripts: fetch datasets, checkpoints, sample files.
+- eval_* scripts: batch evaluation over folders, metric generation.
+- generate_reports/diagrams: reporting and visualization utilities.
+
+Notes
+-----
+- Requires ffmpeg for broad audio format decoding when using pydub path.
+- Large files limited to 100 MB via Flask config.
+- Fusion accuracy not computed automatically in batch scripts per README; fusion focuses on live inference.
