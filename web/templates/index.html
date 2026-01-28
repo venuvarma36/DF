@@ -482,6 +482,222 @@
             }
         }
 
+        .processing-panel {
+            display: none;
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            animation: slideInUp 0.5s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        .processing-panel.show {
+            display: block;
+        }
+
+        .processing-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .processing-steps {
+            display: grid;
+            gap: 15px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(37, 39, 77, 0.3);
+            border-radius: 12px;
+            border-left: 3px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            background: rgba(0, 212, 255, 0.1);
+            border-left-color: var(--primary);
+        }
+
+        .step-item.completed {
+            background: rgba(0, 217, 126, 0.1);
+            border-left-color: var(--success);
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--primary);
+            font-size: 0.9em;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .step-item.active .step-icon {
+            background: rgba(0, 212, 255, 0.3);
+            animation: spin-fast 1s linear infinite;
+        }
+
+        .step-item.completed .step-icon {
+            background: rgba(0, 217, 126, 0.3);
+            color: var(--success);
+        }
+
+        @keyframes spin-fast {
+            to { transform: rotate(360deg); }
+        }
+
+        .step-label {
+            flex: 1;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        .step-item.active .step-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .step-item.completed .step-label {
+            color: var(--success);
+        }
+
+        .step-time {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .step-item.completed .step-time {
+            opacity: 1;
+        }
+
+        .file-processing-list {
+            margin-top: 20px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .file-processing-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(26, 26, 46, 0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            font-size: 0.9em;
+        }
+
+        .file-processing-item.processing {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .file-processing-item.completed {
+            border-color: var(--success);
+            background: rgba(0, 217, 126, 0.05);
+        }
+
+        .file-processing-item.error {
+            border-color: var(--error);
+            background: rgba(255, 23, 68, 0.05);
+        }
+
+        .file-mini-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .file-check {
+            width: 14px;
+            height: 14px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7em;
+            flex-shrink: 0;
+        }
+
+        .file-error-icon {
+            width: 14px;
+            height: 14px;
+            color: var(--error);
+            flex-shrink: 0;
+        }
+
+        .file-name-short {
+            flex: 1;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-processing-item.processing .file-name-short {
+            color: var(--text-primary);
+        }
+
+        .progress-percentage {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .progress-bar-container {
+            margin-top: 15px;
+            background: rgba(26, 26, 46, 0.4);
+            border-radius: 12px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 25px;
@@ -510,6 +726,14 @@
 
             .result-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .processing-panel {
+                padding: 20px;
+            }
+
+            .step-item {
+                padding: 10px 12px;
             }
         }
     </style>
@@ -560,6 +784,47 @@
     </form>
 
     <div class="error-message" id="errorMsg"></div>
+    
+    <div class="processing-panel" id="processingPanel">
+        <div class="processing-header">
+            <div class="pulse-dot"></div>
+            <span>Analysis in Progress</span>
+        </div>
+
+        <div class="processing-steps">
+            <div class="step-item" data-step="upload">
+                <div class="step-icon">1</div>
+                <div class="step-label">Loading Files</div>
+                <div class="step-time" id="uploadTime"></div>
+            </div>
+            <div class="step-item" data-step="preprocess">
+                <div class="step-icon">2</div>
+                <div class="step-label">Preprocessing & Normalization</div>
+                <div class="step-time" id="preprocessTime"></div>
+            </div>
+            <div class="step-item" data-step="extract">
+                <div class="step-icon">3</div>
+                <div class="step-label">Feature Extraction</div>
+                <div class="step-time" id="extractTime"></div>
+            </div>
+            <div class="step-item" data-step="infer">
+                <div class="step-icon">4</div>
+                <div class="step-label">Model Inference & Classification</div>
+                <div class="step-time" id="inferTime"></div>
+            </div>
+            <div class="step-item" data-step="compile">
+                <div class="step-icon">5</div>
+                <div class="step-label">Compiling Results</div>
+                <div class="step-time" id="compileTime"></div>
+            </div>
+        </div>
+
+        <div class="file-processing-list" id="fileProcessingList"></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
     <div class="results" id="results"></div>
 
 </div>
@@ -574,9 +839,133 @@
     const clearImageBtn = document.getElementById('clearImageBtn');
     const resultsDiv = document.getElementById('results');
     const errorMsg = document.getElementById('errorMsg');
+    const processingPanel = document.getElementById('processingPanel');
+    const fileProcessingList = document.getElementById('fileProcessingList');
+    const progressBar = document.getElementById('progressBar');
 
     let audioFiles = [];
     let imageFiles = [];
+    let processingSteps = {
+        upload: { completed: false, startTime: null },
+        preprocess: { completed: false, startTime: null },
+        extract: { completed: false, startTime: null },
+        infer: { completed: false, startTime: null },
+        compile: { completed: false, startTime: null }
+    };
+
+    function updateStepAnimation(stepName, isActive) {
+        const stepEl = document.querySelector(`[data-step="${stepName}"]`);
+        if (!stepEl) return;
+
+        stepEl.classList.remove('active', 'completed');
+        if (isActive) {
+            stepEl.classList.add('active');
+        }
+    }
+
+    function completeStep(stepName, duration) {
+        const stepEl = document.querySelector(`[data-step="${stepName}"]`);
+        if (!stepEl) return;
+
+        stepEl.classList.remove('active');
+        stepEl.classList.add('completed');
+        
+        const timeEl = stepEl.querySelector('[id$="Time"]');
+        if (timeEl && duration) {
+            timeEl.textContent = `${(duration / 1000).toFixed(2)}s`;
+        }
+    }
+
+    function updateProgressBar(current, total) {
+        const percentage = (current / total) * 100;
+        progressBar.style.width = percentage + '%';
+    }
+
+    function addFileProcessingItem(fileName, type) {
+        const item = document.createElement('div');
+        item.className = 'file-processing-item processing';
+        item.id = `file-${fileName}`;
+        item.innerHTML = `
+            <div class="file-mini-spinner"></div>
+            <div class="file-name-short"><i class="fas fa-${type === 'audio' ? 'microphone' : 'image'}"></i> ${fileName}</div>
+            <div class="progress-percentage">0%</div>
+        `;
+        fileProcessingList.appendChild(item);
+    }
+
+    function updateFileProcessingItem(fileName, status, percentage) {
+        const item = document.getElementById(`file-${fileName}`);
+        if (!item) return;
+
+        if (status === 'processing') {
+            item.classList.remove('completed', 'error');
+            item.classList.add('processing');
+            item.innerHTML = `
+                <div class="file-mini-spinner"></div>
+                <div class="file-name-short"><i class="fas fa-${fileName.includes('.mp3') || fileName.includes('.wav') ? 'microphone' : 'image'}"></i> ${fileName}</div>
+                <div class="progress-percentage">${percentage}%</div>
+            `;
+        } else if (status === 'completed') {
+            item.classList.remove('processing', 'error');
+            item.classList.add('completed');
+            item.innerHTML = `
+                <div class="file-check">✓</div>
+                <div class="file-name-short"><i class="fas fa-${fileName.includes('.mp3') || fileName.includes('.wav') ? 'microphone' : 'image'}"></i> ${fileName}</div>
+                <div class="progress-percentage">100%</div>
+            `;
+        } else if (status === 'error') {
+            item.classList.remove('processing', 'completed');
+            item.classList.add('error');
+            item.innerHTML = `
+                <div class="file-error-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="file-name-short"><i class="fas fa-${fileName.includes('.mp3') || fileName.includes('.wav') ? 'microphone' : 'image'}"></i> ${fileName}</div>
+                <div class="progress-percentage">Error</div>
+            `;
+        }
+    }
+
+    function simulateProcessingStages(totalFiles) {
+        const stageDurations = {
+            upload: 800,
+            preprocess: 2000,
+            extract: 2500,
+            infer: 3000,
+            compile: 1200
+        };
+
+        let currentTime = 0;
+
+        Object.entries(stageDurations).forEach(([stage, duration]) => {
+            setTimeout(() => {
+                updateStepAnimation(stage, true);
+            }, currentTime);
+
+            setTimeout(() => {
+                completeStep(stage, duration);
+                
+                const nextStage = Object.keys(stageDurations)[Object.keys(stageDurations).indexOf(stage) + 1];
+                if (nextStage) {
+                    updateStepAnimation(nextStage, true);
+                }
+            }, currentTime + duration);
+
+            currentTime += duration;
+        });
+
+        // Simulate file progress
+        const fileNames = [...audioFiles, ...imageFiles].map(f => f.name);
+        let fileIndex = 0;
+        const fileUpdateInterval = setInterval(() => {
+            if (fileIndex < fileNames.length) {
+                const fileName = fileNames[fileIndex];
+                const progress = Math.min(100, Math.floor(Math.random() * 80) + 20);
+                updateFileProcessingItem(fileName, 'processing', progress);
+                fileIndex++;
+            } else {
+                clearInterval(fileUpdateInterval);
+            }
+        }, 400);
+    }
 
     audioInput.onchange = () => {
         audioFiles = Array.from(audioInput.files);
@@ -591,11 +980,18 @@
     clearBtn.onclick = () => {
         form.reset();
         resultsDiv.classList.remove('show');
+        processingPanel.classList.remove('show');
         errorMsg.classList.remove('show');
         audioName.textContent = '';
         imageName.textContent = '';
         audioFiles = [];
         imageFiles = [];
+        fileProcessingList.innerHTML = '';
+        progressBar.style.width = '0%';
+        Object.keys(processingSteps).forEach(step => {
+            const stepEl = document.querySelector(`[data-step="${step}"]`);
+            if (stepEl) stepEl.classList.remove('active', 'completed');
+        });
     };
 
     clearAudioBtn.onclick = (e) => {
@@ -624,6 +1020,31 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
 
+        // Show processing panel and prepare animations
+        fileProcessingList.innerHTML = '';
+        progressBar.style.width = '0%';
+        processingPanel.classList.add('show');
+        resultsDiv.classList.remove('show');
+
+        // Reset step animations
+        Object.keys(processingSteps).forEach(step => {
+            const stepEl = document.querySelector(`[data-step="${step}"]`);
+            const timeEl = stepEl.querySelector('[id$="Time"]');
+            if (stepEl) {
+                stepEl.classList.remove('active', 'completed');
+                if (timeEl) timeEl.textContent = '';
+            }
+        });
+
+        const totalFiles = audioFiles.length + imageFiles.length;
+        
+        // Add file processing items
+        audioFiles.forEach(file => addFileProcessingItem(file.name, 'audio'));
+        imageFiles.forEach(file => addFileProcessingItem(file.name, 'image'));
+
+        // Start simulating processing stages
+        simulateProcessingStages(totalFiles);
+
         try {
             const formData = new FormData();
             audioFiles.forEach(file => formData.append('audio', file));
@@ -633,9 +1054,33 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Analysis failed');
 
-            renderResults(data);
+            // Complete all steps
+            Object.keys(processingSteps).forEach(step => {
+                const stepEl = document.querySelector(`[data-step="${step}"]`);
+                if (stepEl && !stepEl.classList.contains('completed')) {
+                    completeStep(step, 0);
+                }
+            });
+
+            // Mark all files as completed
+            [...audioFiles, ...imageFiles].forEach(file => {
+                updateFileProcessingItem(file.name, 'completed', 100);
+            });
+
+            progressBar.style.width = '100%';
+
+            // Small delay before showing results
+            setTimeout(() => {
+                renderResults(data);
+                processingPanel.classList.remove('show');
+            }, 800);
         } catch (err) {
             showError("<i class='fas fa-times-circle'></i> " + err.message);
+            processingPanel.classList.remove('show');
+            // Mark failed files
+            [...audioFiles, ...imageFiles].forEach(file => {
+                updateFileProcessingItem(file.name, 'error', 0);
+            });
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-play"></i> Run Analysis';
