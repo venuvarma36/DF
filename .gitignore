@@ -96,6 +96,12 @@ checkpoints/audio_cache/
 *.m4a
 *.flac
 
+# Allow checked-in sample audio
+!samples/real_audio/
+!samples/real_audio/**
+!samples/fake_audio/
+!samples/fake_audio/**
+
 # Zip/Archive files
 *.zip
 *.rar
