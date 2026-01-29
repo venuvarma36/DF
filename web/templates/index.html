@@ -1117,6 +1117,7 @@
             data.audio.forEach(row => {
                 const predictionClass = row.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
                 const predictionIcon = row.prediction === 'FAKE' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                const confidencePercent = (row.confidence * 100).toFixed(1);
                 const card = document.createElement('div');
                 card.className = 'result-card';
 
@@ -1129,7 +1130,7 @@
                         <div class="preview-title"><i class="fas fa-volume-up"></i> ${row.filename}</div>
                         ${row.error ? `<div class="error-chip"><i class="fas fa-exclamation"></i> ${row.error}</div>` : `
                             <span class="prediction-pill ${predictionClass}"><i class="fas ${predictionIcon}"></i> ${row.prediction}</span>
-                            <div class="result-meta"><strong>${parseFloat(row.confidence).toFixed(2)}%</strong> Confidence</div>
+                            <div class="result-meta"><strong>${confidencePercent}%</strong> Confidence</div>
                             <div class="result-meta"><strong>${row.inference_time_ms}</strong> ms Latency</div>
                         `}
                     </div>
@@ -1147,25 +1148,51 @@
             const grid = document.createElement('div');
             grid.className = 'result-grid';
             data.image.forEach(row => {
-                const predictionClass = row.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
-                const predictionIcon = row.prediction === 'FAKE' ? 'fa-exclamation-triangle' : 'fa-check-circle';
                 const card = document.createElement('div');
                 card.className = 'result-card';
 
                 const match = imageFiles.find(f => f.name === row.filename);
                 const previewUrl = match ? URL.createObjectURL(match) : null;
 
-                card.innerHTML = `
-                    ${previewUrl ? `<img class="preview-thumb" src="${previewUrl}" alt="preview" />` : ''}
-                    <div style="flex: 1;">
-                        <div class="preview-title"><i class="fas fa-photo-video"></i> ${row.filename}</div>
-                        ${row.error ? `<div class="error-chip"><i class="fas fa-exclamation"></i> ${row.error}</div>` : `
-                            <span class="prediction-pill ${predictionClass}"><i class="fas ${predictionIcon}"></i> ${row.prediction}</span>
-                            <div class="result-meta"><strong>${parseFloat(row.confidence).toFixed(2)}%</strong> Confidence</div>
-                            <div class="result-meta"><strong>${row.inference_time_ms}</strong> ms Latency</div>
-                        `}
-                    </div>
-                `;
+                if (row.error) {
+                    card.innerHTML = `
+                        ${previewUrl ? `<img class="preview-thumb" src="${previewUrl}" alt="preview" />` : ''}
+                        <div style="flex: 1;">
+                            <div class="preview-title"><i class="fas fa-photo-video"></i> ${row.filename}</div>
+                            <div class="error-chip"><i class="fas fa-exclamation"></i> ${row.error}</div>
+                        </div>
+                    `;
+                } else {
+                    // Final result
+                    const finalPredClass = row.final_result.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
+                    const finalPredIcon = row.final_result.prediction === 'FAKE' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                    const confidencePercent = (row.final_result.confidence * 100).toFixed(1);
+                    
+                    // V1 result
+                    const v1PredClass = row.v1_result.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
+                    const v1PredIcon = row.v1_result.prediction === 'FAKE' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                    const v1ConfPercent = (row.v1_result.confidence * 100).toFixed(1);
+                    
+                    // V3 result
+                    const v3PredClass = row.v3_result.prediction === 'FAKE' ? 'prediction-fake' : 'prediction-real';
+                    const v3PredIcon = row.v3_result.prediction === 'FAKE' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                    const v3ConfPercent = (row.v3_result.confidence * 100).toFixed(1);
+
+                    card.innerHTML = `
+                        ${previewUrl ? `<img class="preview-thumb" src="${previewUrl}" alt="preview" />` : ''}
+                        <div style="flex: 1;">
+                            <div class="preview-title"><i class="fas fa-photo-video"></i> ${row.filename}</div>
+                            <span class="prediction-pill ${finalPredClass}"><i class="fas ${finalPredIcon}"></i> FINAL: ${row.final_result.prediction}</span>
+                            <div class="result-meta"><strong>${confidencePercent}%</strong> Confidence <span style="color: var(--primary); font-size: 0.85em;">(${row.final_result.selected_model})</span></div>
+                            <div class="result-meta"><strong>${row.final_result.total_inference_time_ms}</strong> ms Latency</div>
+                            
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                                <div style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px;"><strong>V1 Model:</strong> ${row.v1_result.prediction} (${v1ConfPercent}%) - ${row.v1_result.inference_time_ms}ms</div>
+                                <div style="font-size: 0.85em; color: var(--text-secondary);"><strong>V3 Model:</strong> ${row.v3_result.prediction} (${v3ConfPercent}%) - ${row.v3_result.inference_time_ms}ms</div>
+                            </div>
+                        </div>
+                    `;
+                }
                 grid.appendChild(card);
             });
             imageSection.appendChild(grid);

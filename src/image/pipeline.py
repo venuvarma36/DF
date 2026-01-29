@@ -23,9 +23,11 @@ def load_image_model(cfg: dict, device: torch.device, ckpt_dir: str):
     backend = cfg["image"].get("backend", "timm")
 
     if backend == "hf":
-        # Support both v1 and v2 models
+        # Support v1, v2, and v3 models
         model_version = cfg["image"].get("model_version", "v1")
-        if model_version == "v2":
+        if model_version == "v3":
+            model_name = cfg["image"].get("hf_model_v3", "prithivMLmods/open-deepfake-detection")
+        elif model_version == "v2":
             model_name = cfg["image"].get("hf_model_v2", "prithivMLmods/Deep-Fake-Detector-v2-Model")
         else:
             model_name = cfg["image"].get("hf_model", "prithivMLmods/deepfake-detector-model-v1")
