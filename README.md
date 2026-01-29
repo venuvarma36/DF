@@ -26,6 +26,7 @@ SecureVision is a **multimodal deepfake detection system** capable of identifyin
    ```
 3. **Download model weights**
    - **Audio (SpecRNet-Lite):** place the `audio_kaggle_best.pt` checkpoint at `checkpoints/audio_kaggle_best.pt` (use your provided download link or release asset).
+   https://drive.google.com/file/d/1ATxkEhXcATHFfIPRV04GYGqAbR8sraP1/view?usp=sharing
    - **Image (SigLIP, Hugging Face):** downloads automatically on first run. To pre-download:
      ```powershell
      huggingface-cli download prithivMLmods/deepfake-detector-model-v1 \
