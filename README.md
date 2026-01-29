@@ -12,6 +12,38 @@ SecureVision is a **multimodal deepfake detection system** capable of identifyin
 
 ---
 
+## Installation & Setup (Windows)
+
+1. **Prerequisites**
+   - Python 3.11+ in PATH; PowerShell available
+   - (Optional) CUDA-capable GPU with the right NVIDIA drivers
+2. **Create & activate a virtual environment** (from repo root):
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+3. **Download model weights**
+   - **Audio (SpecRNet-Lite):** place the `audio_kaggle_best.pt` checkpoint at `checkpoints/audio_kaggle_best.pt` (use your provided download link or release asset).
+   - **Image (SigLIP, Hugging Face):** downloads automatically on first run. To pre-download:
+     ```powershell
+     huggingface-cli download prithivMLmods/deepfake-detector-model-v1 \
+       --local-dir checkpoints/pretrained_hf/models--prithivMLmods--deepfake-detector-model-v1 \
+       --local-dir-use-symlinks False
+     ```
+   - **Optional fallback image model:**
+     ```powershell
+     huggingface-cli download prithivMLmods/open-deepfake-detection \
+       --local-dir checkpoints/pretrained_hf/models--prithivMLmods--open-deepfake-detection \
+       --local-dir-use-symlinks False
+     ```
+   - If the models are private, run `huggingface-cli login` first.
+
+Once the environment and checkpoints are in place, you can launch the web app (`run_webapp.ps1`) or run CLI examples below.
+
+---
+
 ## System Components
 
 ### Audio Detection
