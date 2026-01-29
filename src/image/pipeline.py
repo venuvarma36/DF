@@ -23,12 +23,20 @@ def load_image_model(cfg: dict, device: torch.device, ckpt_dir: str):
     backend = cfg["image"].get("backend", "timm")
 
     if backend == "hf":
-        model_name = cfg["image"].get("hf_model", "prithivMLmods/deepfake-detector-model-v1")
+        # Support both v1 and v2 models
+        model_version = cfg["image"].get("model_version", "v1")
+        if model_version == "v2":
+            model_name = cfg["image"].get("hf_model_v2", "prithivMLmods/Deep-Fake-Detector-v2-Model")
+        else:
+            model_name = cfg["image"].get("hf_model", "prithivMLmods/deepfake-detector-model-v1")
+        
         cache_dir = os.path.join(ckpt_dir, "pretrained_hf")
+        print(f"Loading HuggingFace image model ({model_version.upper()}): {model_name}")
         processor = AutoImageProcessor.from_pretrained(model_name, cache_dir=cache_dir)
         model = SiglipForImageClassification.from_pretrained(model_name, cache_dir=cache_dir)
         model = model.to(device)
         model.eval()
+        print(f"✓ Image model loaded successfully: {model_name} ({model_version.upper()})")
         return ImageModel("hf", model, processor)
 
     # timm / local checkpoint path

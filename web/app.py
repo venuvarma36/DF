@@ -43,11 +43,18 @@ print("  - Loading audio model (trained)...")
 audio_model = load_audio_model(cfg, device, 'checkpoints')
 
 print("  - Loading image model (HuggingFace pretrained)...")
-model_name = "prithivMLmods/deepfake-detector-model-v1"
+model_version = cfg["image"].get("model_version", "v1")
+if model_version == "v2":
+    model_name = cfg["image"].get("hf_model_v2", "prithivMLmods/Deep-Fake-Detector-v2-Model")
+else:
+    model_name = cfg["image"].get("hf_model", "prithivMLmods/deepfake-detector-model-v1")
+
 cache_dir = "checkpoints/pretrained_hf"
+print(f"  - Using image model ({model_version.upper()}): {model_name}")
 image_processor = AutoImageProcessor.from_pretrained(model_name, cache_dir=cache_dir)
 image_model = SiglipForImageClassification.from_pretrained(model_name, cache_dir=cache_dir)
 image_model = image_model.to(device)
+print(f"✓ Image model loaded successfully: {model_name} ({model_version.upper()})")
 image_model.eval()
 print("Models loaded!")
 

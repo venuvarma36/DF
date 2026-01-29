@@ -24,9 +24,15 @@ def main():
     parser.add_argument("--config", type=str, default="configs/hparams.yaml")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
     parser.add_argument("--precision", type=str, default="fp16", choices=["fp32", "fp16"])
+    parser.add_argument("--image_model_version", type=str, default=None, choices=["v1", "v2"], 
+                        help="Image model version (v1 or v2). Overrides config setting.")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
+    
+    # Override image model version if specified
+    if args.image_model_version:
+        cfg["image"]["model_version"] = args.image_model_version
     device = torch.device(args.device)
     amp_dtype = torch.float16 if args.precision == "fp16" and device.type == "cuda" else torch.float32
 

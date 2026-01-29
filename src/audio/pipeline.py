@@ -32,10 +32,18 @@ def load_audio_model(cfg: dict, device: torch.device, ckpt_dir: str):
         os.path.join(ckpt_dir, "audio_kaggle_best.pt"),
         os.path.join(ckpt_dir, "audio_best.pt"),
     ]
+    loaded_checkpoint = None
     for ckpt_path in ckpt_candidates:
         if os.path.exists(ckpt_path):
             model.load_state_dict(torch.load(ckpt_path, map_location=device))
+            loaded_checkpoint = os.path.basename(ckpt_path)
             break
+    
+    if loaded_checkpoint:
+        print(f"✓ Audio model loaded successfully: SpecRNetLite (TRAINED) - {loaded_checkpoint}")
+    else:
+        print(f"✓ Audio model loaded successfully: SpecRNetLite (UNTRAINED/RANDOM WEIGHTS)")
+    
     model.eval()
     return model
 

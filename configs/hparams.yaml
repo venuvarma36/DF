@@ -39,6 +39,8 @@ audio:
 image:
   backend: hf
   hf_model: prithivMLmods/deepfake-detector-model-v1
+  hf_model_v2: prithivMLmods/Deep-Fake-Detector-v2-Model
+  model_version: v2  # v1 or v2
   model: deit_small_patch8_distilled
   threshold: 0.30
   temperature: 1.0
